@@ -25,6 +25,10 @@ if __name__ == '__main__':
     # 增加指定的参数
     parser.add_argument('--task', type=str,
                         default='traffic_state_pred', help='the name of task')
+    # parser.add_argument('--model', type=str,
+    #                     default='DGCN', help='the name of model')
+    # parser.add_argument('--dataset', type=str,
+    #                     default='Ocean_sensor', help='the name of dataset')
     parser.add_argument('--model', type=str,
                         default='GRU', help='the name of model')
     parser.add_argument('--dataset', type=str,
