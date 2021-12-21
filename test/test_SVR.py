@@ -15,7 +15,8 @@ from libcity.utils import preprocess_data
 config = {
     'model': 'SVR',
     'kernel': 'rbf',
-    'dataset': 'METR_LA',
+    'dataset': 'Ocean_sensor',
+    'data_col': 'temp',
     'train_rate': 0.7,
     'eval_rate': 0.1,
     'input_window': 12,
@@ -26,7 +27,7 @@ config = {
 
 def get_data(dataset):
     # path
-    path = 'raw_data/' + dataset + '/'
+    path = root_path + '/raw_data/' + dataset + '/'
     config_path = path + 'config.json'
     dyna_path = path + dataset + '.dyna'
     geo_path = path + dataset + '.geo'

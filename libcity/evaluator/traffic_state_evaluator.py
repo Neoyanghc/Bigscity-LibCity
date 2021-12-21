@@ -160,6 +160,10 @@ class TrafficStateEvaluator(AbstractEvaluator):
                     dataframe[metric].append(self.result[metric+'@'+str(i)])
             dataframe = pd.DataFrame(dataframe, index=range(1, self.len_timeslots + 1))
             dataframe.to_csv(os.path.join(save_path, '{}.csv'.format(filename)), index=False)
+            # 显示所有列
+            pd.set_option('display.max_columns', None)
+            # 显示所有行
+            pd.set_option('display.max_rows', None)
             self._logger.info('Evaluate result is saved at ' +
                               os.path.join(save_path, '{}.csv'.format(filename)))
             self._logger.info("\n" + str(dataframe))

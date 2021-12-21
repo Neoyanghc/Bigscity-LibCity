@@ -15,7 +15,9 @@ from libcity.utils import preprocess_data
 config = {
     'model': 'VAR',
     'maxlags': 1,
-    'dataset': 'METR_LA',
+    'dataset': 'Ocean_sensor',
+    'data_col': 'temp',
+    # 'dataset': 'METR_LA',
     'train_rate': 0.7,
     'eval_rate': 0.1,
     'input_window': 12,
@@ -27,7 +29,7 @@ config = {
 
 def get_data(dataset):
     # path
-    path = 'raw_data/' + dataset + '/'
+    path = root_path + '/raw_data/' + dataset + '/'
     config_path = path + 'config.json'
     dyna_path = path + dataset + '.dyna'
     geo_path = path + dataset + '.geo'
@@ -84,7 +86,7 @@ def run_VAR(data, inputs):
     data = scaler.transform(data)
 
     model = VAR(data)
-    results = model.fit(maxlags=maxlags, ic='aic')
+    results = model.fit()
 
     inputs = inputs.reshape(inputs.shape[0], inputs.shape[1], -1)  # (num_samples, out, N * F)
     y_pred = []  # (num_samples, out, N, F)

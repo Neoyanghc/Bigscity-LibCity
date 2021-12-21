@@ -81,7 +81,6 @@ def data_time_process(data):
     a = float('nan')
     float_list = data.drop_duplicates(subset='float_id')['float_id'].to_list()
     for float_index in float_list:
-        nan_num = 0
         d = data[data['float_id'] == float_index]
         ts = 0
         dicts = []
@@ -89,7 +88,7 @@ def data_time_process(data):
             dicts.append([])
         index = 1
         while index < len(d) + 1:
-            if ts >= len(time_all) - 1 or nan_num >= 100:
+            if ts >= len(time_all) - 1 :
                 break
             s_time = time_all[ts]
             e_time = time_all[ts + 1]
@@ -114,14 +113,11 @@ def data_time_process(data):
             else:
                 if len(dicts[ts]) == 0:
                     dicts[ts].append([s_time+datetime.timedelta(days=5), float_index, a, a, a])
-                    nan_num += 1
                 ts += 1
-        while ts <= len(time_all) - 1 and nan_num < 100:
+        while ts <= len(time_all) - 1:
             dicts[ts].append([s_time, float_index, a, a, a])
-            nan_num += 1
             ts += 1
-        if nan_num < 100:
-            float_dict.append(dicts)
+        float_dict.append(dicts)
     data_process = []
     for i in float_dict:
         for j in i:
@@ -138,16 +134,17 @@ if __name__ == '__main__':
     # data_sort = data_sort_and_process(data)
     # data_delete_by_lat_lon = delete_float_id_by_lat_lon(data_sort)
     # data_delete_by_lat_lon.to_csv('root/Ocean_data_process/data_process_2011_2021.csv',index=None)
-    # ds = pd.read_csv('/root/Ocean_data_process/delete_by_lat_time.csv')
-    # ds['time'] = pd.to_datetime(ds['time'], format='%Y-%m-%d')
-    # data_process = data_time_process(ds)
-    # data_process.to_csv('/root/Ocean_data_process/data_process_2011_2021.csv', index=None)
-    ds = pd.read_csv('/root/Ocean_data_process/data_process_2011_2021.csv')
-    float_list = ds.drop_duplicates(subset='float_id')['float_id'].to_list()
-    for float_index in float_list:
-        data = ds[ds['float_id'] == float_index]
-        dateframe = data
-        # dateframe['temp'] = dateframe['temp'].interpolate(limit=5)
-        # dateframe['lat'] = dateframe['lat'].interpolate()
-        # dateframe['lon'] = dateframe['lon'].interpolate()
+    ds = pd.read_csv('/root/Ocean_data_process/delete_by_lat_time.csv')
+    ds['time'] = pd.to_datetime(ds['time'], format='%Y-%m-%d')
+    data_process = data_time_process(ds)
+    data_process.to_csv('/root/Ocean_data_process/data_process_2011_2021_null.csv', index=None)
+    # ds = pd.read_csv('/root/Ocean_data_process/data_process_2011_2021.csv')
+    # float_list = ds.drop_duplicates(subset='float_id')['float_id'].to_list()
+    # for float_index in float_list:
+    #     data = ds[ds['float_id'] == float_index]
+    #     print(data['temp'].isna.sum())
+    #     dateframe = data
+    #     dateframe['temp'] = dateframe['temp'].interpolate(limit=5)
+    #     dateframe['lat'] = dateframe['lat'].interpolate()
+    #     dateframe['lon'] = dateframe['lon'].interpolate()
 

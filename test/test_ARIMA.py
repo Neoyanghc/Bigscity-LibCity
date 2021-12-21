@@ -12,6 +12,10 @@ root_path = '/'.join(root_path.split('/')[:-2])
 sys.path.append(root_path)
 from libcity.evaluator.utils import evaluate_model
 from libcity.utils import preprocess_data
+import warnings
+
+
+warnings.filterwarnings('ignore')
 
 
 config = {
@@ -19,7 +23,9 @@ config = {
     'p_range': [0, 4],
     'd_range': [0, 3],
     'q_range': [0, 4],
-    'dataset': 'METR_LA',
+    # 'dataset': 'METR_LA',
+    'dataset': 'Ocean_sensor',
+    'data_col': 'temp',
     'train_rate': 0.7,
     'eval_rate': 0.1,
     'input_window': 12,
@@ -31,7 +37,7 @@ config = {
 
 def get_data(dataset):
     # path
-    path = 'raw_data/' + dataset + '/'
+    path = root_path + '/raw_data/' + dataset + '/'
     config_path = path + 'config.json'
     dyna_path = path + dataset + '.dyna'
     geo_path = path + dataset + '.geo'
@@ -79,8 +85,9 @@ def get_data(dataset):
 # Try to find the best (p,d,q) parameters for ARIMA
 def order_select_pred(data):
     # data: (T, F)
-    res = ARIMA(data, order=(0, 0, 0)).fit()
+    res = ARIMA(data, order=(0, 1, 3)).fit()
     bic = res.bic
+    return res
     p_range = config.get('p_range', [0, 4])
     d_range = config.get('d_range', [0, 3])
     q_range = config.get('q_range', [0, 4])

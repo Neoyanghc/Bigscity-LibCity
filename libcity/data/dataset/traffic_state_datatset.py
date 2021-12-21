@@ -580,6 +580,7 @@ class TrafficStateDataset(AbstractDataset):
             time_ind = (self.timesolts - self.timesolts.astype("datetime64[D]")) / np.timedelta64(1, "D")
             time_in_day = np.tile(time_ind, [1, num_nodes, 1]).transpose((2, 1, 0))
             data_list.append(time_in_day)
+        # Todo
         if self.add_day_in_week and not is_time_nan:
             dayofweek = []
             for day in self.timesolts.astype("datetime64[D]"):

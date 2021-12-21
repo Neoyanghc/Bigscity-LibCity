@@ -152,6 +152,10 @@ def evaluate_model(y_pred, y_true, metrics, mode='single', path='metrics.csv'):
                 raise ValueError('Error parameter evaluator_mode={}, please set `single` or `average`.'.format(mode))
         df.append(line)
     df = pd.DataFrame(df, columns=metrics)
+    # 显示所有列
+    pd.set_option('display.max_columns', None)
+    # 显示所有行
+    pd.set_option('display.max_rows', None)
     print(df)
     df.to_csv(path)
     return df

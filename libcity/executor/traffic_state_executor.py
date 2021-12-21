@@ -291,6 +291,9 @@ class TrafficStateExecutor(AbstractExecutor):
         eval_time = []
         num_batches = len(train_dataloader)
         self._logger.info("num_batches:{}".format(num_batches))
+        run_neptune = neptune.init(
+            project="neoyang/oceanSTGCN",api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI5MTIyZjRiNi04NmE2LTQ1NDAtYTEwOS1jNzliZTdmNzEzNDIifQ==",
+        )
 
         for epoch_idx in range(self._epoch_num, self.epochs):
             start_time = time.time()
@@ -317,6 +320,9 @@ class TrafficStateExecutor(AbstractExecutor):
                 message = 'Epoch [{}/{}] train_loss: {:.4f}, val_loss: {:.4f}, lr: {:.6f}, {:.2f}s'.\
                     format(epoch_idx, self.epochs, np.mean(losses), val_loss, log_lr, (end_time - start_time))
                 self._logger.info(message)
+                run_neptune["learning_rate"].log(log_lr)
+                run_neptune["train_loss"].log(np.mean(losses))
+                run_neptune["val_loss"].log(val_loss)
 
             if self.hyper_tune:
                 # use ray tune to checkpoint
@@ -346,6 +352,7 @@ class TrafficStateExecutor(AbstractExecutor):
                                      sum(eval_time) / len(eval_time)))
         if self.load_best_epoch:
             self.load_model_with_epoch(best_epoch)
+        run_neptune.stop()
         return min_val_loss
 
     def _train_epoch(self, train_dataloader, epoch_idx, loss_func=None):
