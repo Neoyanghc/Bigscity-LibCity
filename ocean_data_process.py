@@ -43,15 +43,37 @@ def delete_float_id_by_lat_lon(data):
     float_list = data.drop_duplicates(subset='float_id')['float_id'].to_list()
     not_used_float = []
     for float_id in float_list:
-        tmp = 0
-        lat_d = list(data[data['float_id'] == float_id]['lat'])
-        lon_d = list(data[data['float_id'] == float_id]['lon'])
-        for i in range(len(lat_d) - 1):
-            tmp_lat = math.fabs(lat_d[i + 1]) - math.fabs(lat_d[i])
-            tmp_lon = math.fabs(lon_d[i + 1]) - math.fabs(lon_d[i])
-            if tmp_lat > 5 or tmp_lon > 5:
+        try:
+            d = data[data['float_id'] == float_id]
+            lat_d = list(d['lat'])
+            lon_d = list(d['lon'])
+            # temp_d = list(data[data['float_id'] == float_id]['temp'])
+            lat_d_1 = np.absolute(np.array(lat_d[:-1]))
+            lat_d_2 = np.absolute(np.array(lat_d[1:]))
+            lon_d_1 = np.absolute(np.array(lon_d[:-1]))
+            lon_d_2 = np.absolute(np.array(lon_d[1:]))
+            # temp_d_1 = np.array(temp_d[:-1])
+            # temp_d_2 = np.array(temp_d[1:])
+            lat_d_3 = math.fabs((lat_d_2 - lat_d_1).max())
+            lon_d_3 = math.fabs((lon_d_2 - lon_d_1).max())
+            # temp_d_3 = math.fabs((temp_d_2 - temp_d_1).max())
+            if lat_d_3 > 5 or lon_d_3 > 5:
                 not_used_float.append(float_id)
-                break
+                print('not_float_id',float_id,lat_d_3,lon_d_3)
+        except:
+            not_used_float.append(float_id)
+            print(float_id)
+            continue
+        # lat_d = list(data[data['float_id'] == float_id]['lat'])
+        # lon_d = list(data[data['float_id'] == float_id]['lon'])
+        # temp_d = list(data[data['float_id'] == float_id]['temp'])
+        # for i in range(len(lat_d) - 1):
+        #     tmp_lat = math.fabs(lat_d[i + 1]) - math.fabs(lat_d[i])
+        #     tmp_lon = math.fabs(lon_d[i + 1]) - math.fabs(lon_d[i])
+        #     tmp_temp = math.fabs(temp_d[i + 1]) - math.fabs(temp_d[i])
+        #     if math.fabs(tmp_lat) > 5 or math.fabs(tmp_lon) > 5 or math.fabs(tmp_temp) > 5:
+        #         not_used_float.append(float_id)
+        #         break
     print("delete_float_id_by_lat_lon_num is", len(not_used_float))
     ds = data[~data['float_id'].isin(not_used_float)]
     return ds
@@ -81,6 +103,7 @@ def data_time_process(data):
     a = float('nan')
     float_list = data.drop_duplicates(subset='float_id')['float_id'].to_list()
     for float_index in float_list:
+        print(float_index)
         d = data[data['float_id'] == float_index]
         ts = 0
         dicts = []
@@ -88,7 +111,7 @@ def data_time_process(data):
             dicts.append([])
         index = 1
         while index < len(d) + 1:
-            if ts >= len(time_all) - 1 :
+            if ts >= len(time_all) - 1:
                 break
             s_time = time_all[ts]
             e_time = time_all[ts + 1]
@@ -132,19 +155,13 @@ def data_time_process(data):
 if __name__ == '__main__':
     # data = ocean_data_load()
     # data_sort = data_sort_and_process(data)
+    # data_sort.to_csv('/root/Ocean_sensor_model/all_ocean_2011_2021.csv', index=None)
     # data_delete_by_lat_lon = delete_float_id_by_lat_lon(data_sort)
-    # data_delete_by_lat_lon.to_csv('root/Ocean_data_process/data_process_2011_2021.csv',index=None)
-    ds = pd.read_csv('/root/Ocean_data_process/delete_by_lat_time.csv')
-    ds['time'] = pd.to_datetime(ds['time'], format='%Y-%m-%d')
-    data_process = data_time_process(ds)
-    data_process.to_csv('/root/Ocean_data_process/data_process_2011_2021_null.csv', index=None)
-    # ds = pd.read_csv('/root/Ocean_data_process/data_process_2011_2021.csv')
-    # float_list = ds.drop_duplicates(subset='float_id')['float_id'].to_list()
-    # for float_index in float_list:
-    #     data = ds[ds['float_id'] == float_index]
-    #     print(data['temp'].isna.sum())
-    #     dateframe = data
-    #     dateframe['temp'] = dateframe['temp'].interpolate(limit=5)
-    #     dateframe['lat'] = dateframe['lat'].interpolate()
-    #     dateframe['lon'] = dateframe['lon'].interpolate()
+    # data_delete_by_lat_lon.to_csv('/root/Ocean_sensor_model/data_delete_by_lat_lon_2011_2021.csv', index=None)
+    # ds = pd.read_csv('/root/Ocean_sensor_model/data_delete_by_lat_lon_2011_2021.csv')
+    # ds['time'] = pd.to_datetime(ds['time'], format='%Y-%m-%d')
+    # data_process = data_time_process(ds)
+    # data_process.to_csv('/root/Ocean_sensor_model/data_process_2011_2021_null.csv', index=None)
+    ds = pd.read_csv('/root/Ocean_sensor_model/data_process_2011_2021_null.csv')
+
 
