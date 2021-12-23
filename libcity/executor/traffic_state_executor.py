@@ -9,6 +9,7 @@ from libcity.executor.abstract_executor import AbstractExecutor
 from libcity.utils import get_evaluator, ensure_dir
 from libcity.model import loss
 from functools import partial
+import neptune.new as neptune
 
 
 class TrafficStateExecutor(AbstractExecutor):
