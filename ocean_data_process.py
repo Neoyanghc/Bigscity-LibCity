@@ -102,6 +102,70 @@ def data_time_process(data):
     float_dict = []
     a = float('nan')
     float_list = data.drop_duplicates(subset='float_id')['float_id'].to_list()
+    float_sensor_num = np.full([len(float_list), len(time_all), 3], np.nan)
+    for float_index in range(len(float_list)-1):
+        d = data[data['float_id'] == float_list[float_index]]
+        tmp_time = 0
+        for row in d.iterrows():
+            time = row[1]['time']
+            temp = row[1]['temp']
+            lon = row[1]['lon']
+            lat = row[1]['lat']
+            while tmp_time < len(time_all)-1 and time_all[tmp_time+1] < time:
+                tmp_time += 1
+            if np.isnan(float_sensor_num[float_index][tmp_time][0]):
+                float_sensor_num[float_index][tmp_time] = np.array([temp, lon, lat])
+            else:
+                float_sensor_num[float_index][tmp_time] = (float_sensor_num[float_index][tmp_time] + np.array([temp, lon, lat])) / 2
+    np.save("float_sensor_num.npy", float_sensor_num)
+    return 0
+
+    def data_time_process(data):
+        time_all = []
+        start_time = datetime.datetime(2011, 1, 1)
+        end_time = datetime.datetime(2021, 12, 1)
+        while 1:
+            if start_time > end_time:
+                break
+            else:
+                time_all.append(start_time)
+                start_time += datetime.timedelta(days=10)
+        float_dict = []
+        a = float('nan')
+        float_list = data.drop_duplicates(subset='float_id')['float_id'].to_list()
+        float_sensor_num = np.full([len(float_list), len(time_all), 3], np.nan)
+        for float_index in range(len(float_list) - 1):
+            d = data[data['float_id'] == float_list[float_index]]
+            tmp_time = 0
+            for row in d.iterrows():
+                time = row[1]['time']
+                temp = row[1]['temp']
+                lon = row[1]['lon']
+                lat = row[1]['lat']
+                while tmp_time < len(time_all) - 1 and time_all[tmp_time + 1] < time:
+                    tmp_time += 1
+                if np.isnan(float_sensor_num[float_index][tmp_time][0]):
+                    float_sensor_num[float_index][tmp_time] = np.array([temp, lon, lat])
+                else:
+                    float_sensor_num[float_index][tmp_time] = (float_sensor_num[float_index][tmp_time] + np.array(
+                        [temp, lon, lat])) / 2
+        np.save("float_sensor_num.npy", float_sensor_num)
+        return 0
+
+
+def data_time_process_old(data):
+    time_all = []
+    start_time = datetime.datetime(2011, 1, 1)
+    end_time = datetime.datetime(2021, 12, 1)
+    while 1:
+        if start_time > end_time:
+            break
+        else:
+            time_all.append(start_time)
+            start_time += datetime.timedelta(days=10)
+    float_dict = []
+    a = float('nan')
+    float_list = data.drop_duplicates(subset='float_id')['float_id'].to_list()
     for float_index in float_list:
         print(float_index)
         d = data[data['float_id'] == float_index]
@@ -152,6 +216,42 @@ def data_time_process(data):
     return dateframe
 
 
+def numpy_to_csv():
+    df = pd.read_csv('/root/Ocean_sensor_model/data_delete_by_lat_lon_2011_2021.csv')
+    # ds['time'] = pd.to_datetime(ds['time'], format='%Y-%m-%d')
+    # data_process = data_time_process(ds)
+    # data_process.to_csv('/root/Ocean_sensor_model/data_process_2011_2021_null.csv', index=None)
+    data = np.load("float_sensor_num.npy")
+    float_list = df.drop_duplicates(subset='float_id')['float_id'].to_list()
+    dataframe_list = []
+    time_all = []
+    start_time = datetime.datetime(2011, 1, 1)
+    end_time = datetime.datetime(2021, 12, 1)
+    while 1:
+        if start_time > end_time:
+            break
+        else:
+            time_all.append(start_time)
+            start_time += datetime.timedelta(days=10)
+    for i in range(len(float_list)):
+        float_id = float_list[i]
+        data_float = data[i]
+        for j in range(len(time_all)):
+            dataframe_list.append([float_id, time_all[j], data_float[j][1], data_float[j][2], data_float[j][0]])
+    data_full = pd.DataFrame(columns=['float_id', 'time', 'lat', 'lon', 'temp'], data=dataframe_list)
+    data_full.to_csv('/root/Ocean_sensor_model/data_process_2011_2021_null_numpy.csv', index=None)
+
+
+def create_float_nan_array():
+    data = np.load("float_sensor_num.npy")
+    data_float = np.zeros([data.shape[0], data.shape[1]])
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            if ~np.isnan(data[i][j][0]):
+                data_float[i][j] = 1
+    np.save('float_nan.npy', data_float)
+
+
 if __name__ == '__main__':
     # data = ocean_data_load()
     # data_sort = data_sort_and_process(data)
@@ -162,6 +262,12 @@ if __name__ == '__main__':
     # ds['time'] = pd.to_datetime(ds['time'], format='%Y-%m-%d')
     # data_process = data_time_process(ds)
     # data_process.to_csv('/root/Ocean_sensor_model/data_process_2011_2021_null.csv', index=None)
-    ds = pd.read_csv('/root/Ocean_sensor_model/data_process_2011_2021_null.csv')
+    data = np.load("float_nan.npy")
+    data_count = np.sum(data, axis=0)
+    data_sort_count = np.sort(data_count)
+    print(1)
+
+
+
 
 
