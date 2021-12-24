@@ -120,38 +120,6 @@ def data_time_process(data):
     np.save("float_sensor_num.npy", float_sensor_num)
     return 0
 
-    def data_time_process(data):
-        time_all = []
-        start_time = datetime.datetime(2011, 1, 1)
-        end_time = datetime.datetime(2021, 12, 1)
-        while 1:
-            if start_time > end_time:
-                break
-            else:
-                time_all.append(start_time)
-                start_time += datetime.timedelta(days=10)
-        float_dict = []
-        a = float('nan')
-        float_list = data.drop_duplicates(subset='float_id')['float_id'].to_list()
-        float_sensor_num = np.full([len(float_list), len(time_all), 3], np.nan)
-        for float_index in range(len(float_list) - 1):
-            d = data[data['float_id'] == float_list[float_index]]
-            tmp_time = 0
-            for row in d.iterrows():
-                time = row[1]['time']
-                temp = row[1]['temp']
-                lon = row[1]['lon']
-                lat = row[1]['lat']
-                while tmp_time < len(time_all) - 1 and time_all[tmp_time + 1] < time:
-                    tmp_time += 1
-                if np.isnan(float_sensor_num[float_index][tmp_time][0]):
-                    float_sensor_num[float_index][tmp_time] = np.array([temp, lon, lat])
-                else:
-                    float_sensor_num[float_index][tmp_time] = (float_sensor_num[float_index][tmp_time] + np.array(
-                        [temp, lon, lat])) / 2
-        np.save("float_sensor_num.npy", float_sensor_num)
-        return 0
-
 
 def data_time_process_old(data):
     time_all = []
@@ -233,13 +201,17 @@ def numpy_to_csv():
         else:
             time_all.append(start_time)
             start_time += datetime.timedelta(days=10)
+    dataframe = pd.DataFrame(columns=['float_id', 'time', 'lat', 'lon', 'temp'])
     for i in range(len(float_list)):
         float_id = float_list[i]
         data_float = data[i]
         for j in range(len(time_all)):
             dataframe_list.append([float_id, time_all[j], data_float[j][1], data_float[j][2], data_float[j][0]])
-    data_full = pd.DataFrame(columns=['float_id', 'time', 'lat', 'lon', 'temp'], data=dataframe_list)
-    data_full.to_csv('/root/Ocean_sensor_model/data_process_2011_2021_null_numpy.csv', index=None)
+        data_full = pd.DataFrame(columns=['float_id', 'time', 'lat', 'lon', 'temp'], data=dataframe_list)
+        data_full.interpolate(limit_area='inside')
+        dataframe_list = []
+        dataframe = pd.concat([dataframe, data_full])
+    dataframe.to_csv('/root/Ocean_sensor_model/data_process_2011_2021_null_numpy_inside.csv', index=None)
 
 
 def create_float_nan_array():
@@ -252,6 +224,30 @@ def create_float_nan_array():
     np.save('float_nan.npy', data_float)
 
 
+def creat_count():
+    data = np.load("float_nan.npy")
+    data_np = np.zeros([data.shape[0], data.shape[1], data.shape[1]])
+    data_np_count = np.zeros([data.shape[0], data.shape[1], data.shape[1]])
+    for i in range(data.shape[0]):
+        s = data[i]
+        numpy_array = np.diag(s)
+        for k in range(1, data.shape[1]):
+            for v in range(data.shape[1]-k):
+                numpy_array[v][v+k] = numpy_array[v][v+k-1] + s[v+k]
+        data_np[i] = numpy_array
+        numpy_array_2 = np.diag(s)
+        for x in range(data.shape[1]):
+            for z in range(x+1, data.shape[1]):
+                if numpy_array[x][z] / (z-x) >= 0.8:
+                    numpy_array_2[x][z] = 1
+                else:
+                    numpy_array_2[x][z] = 0
+        data_np_count[i] = numpy_array_2
+        print(i)
+    np.save('data_np.npy', data_np)
+    np.save('data_np_count.npy', data_np_count)
+
+
 if __name__ == '__main__':
     # data = ocean_data_load()
     # data_sort = data_sort_and_process(data)
@@ -262,10 +258,15 @@ if __name__ == '__main__':
     # ds['time'] = pd.to_datetime(ds['time'], format='%Y-%m-%d')
     # data_process = data_time_process(ds)
     # data_process.to_csv('/root/Ocean_sensor_model/data_process_2011_2021_null.csv', index=None)
-    data = np.load("float_nan.npy")
-    data_count = np.sum(data, axis=0)
-    data_sort_count = np.sort(data_count)
+    # numpy_to_csv()
+    data = np.load('data_np_count.npy')
+    data_sum = np.sum(data, axis=0)
+    for i in range(data.shape[1]):
+        for j in range(i, data.shape[1]):
+            data_sum[i][j] *= (j-i+1)
+    print(np.where(data_sum == 225104))
     print(1)
+
 
 
 
