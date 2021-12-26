@@ -6,19 +6,16 @@ import math
 
 
 def ocean_data_load():
-    atlantic_2011_2021 = np.load("/root/Ocean_data_process/atlantic_Y_2011_2021.npy", allow_pickle=True)
-    india_2011_2021 = np.load("/root/Ocean_data_process/india_Y_2011_2021.npy", allow_pickle=True)
-    pacific_2011_2021 = np.load("/root/Ocean_data_process/pacific_Y_2011_2021.npy", allow_pickle=True)
+    atlantic_2011_2021 = np.load("/root/Ocean_sensor_model/sensor_data/atlantic_ocean.npy", allow_pickle=True)
+    india_2011_2021 = np.load("/root/Ocean_sensor_model/sensor_data/indian_ocean.npy", allow_pickle=True)
+    pacific_2011_2021 = np.load("/root/Ocean_sensor_model/sensor_data/pacific_ocean.npy", allow_pickle=True)
     data_frame = []
     for i in atlantic_2011_2021:
-        for j in i:
-            data_frame.append(j)
+        data_frame.append(i)
     for i in india_2011_2021:
-        for j in i:
-            data_frame.append(j)
+        data_frame.append(i)
     for i in pacific_2011_2021:
-        for j in i:
-            data_frame.append(j)
+        data_frame.append(i)
     dataf = pd.DataFrame(columns=['time', 'float_id', 'lat', 'lon', 'temp'], data=data_frame)
     return dataf
 
@@ -76,7 +73,13 @@ def delete_float_id_by_lat_lon(data):
         #         break
     print("delete_float_id_by_lat_lon_num is", len(not_used_float))
     ds = data[~data['float_id'].isin(not_used_float)]
-    return ds
+    float_list = ds.drop_duplicates(subset='float_id')['float_id'].to_list()
+    df = pd.DataFrame(columns=['float_id', 'time', 'lat', 'lon', 'temp'])
+    for float_id in float_list:
+        d = ds[ds['float_id'] == float_id]
+        data_full = d.interpolate(limit_area='inside')
+        df = pd.concat([df, data_full])
+    return df
 
 
 def delete_float_id_by_num(data, frequnet: 100):
@@ -117,8 +120,7 @@ def data_time_process(data):
                 float_sensor_num[float_index][tmp_time] = np.array([temp, lon, lat])
             else:
                 float_sensor_num[float_index][tmp_time] = (float_sensor_num[float_index][tmp_time] + np.array([temp, lon, lat])) / 2
-    np.save("float_sensor_num.npy", float_sensor_num)
-    return 0
+    return float_sensor_num
 
 
 def data_time_process_old(data):
@@ -185,11 +187,11 @@ def data_time_process_old(data):
 
 
 def numpy_to_csv():
-    df = pd.read_csv('/root/Ocean_sensor_model/data_delete_by_lat_lon_2011_2021.csv')
+    df = pd.read_csv('/root/Ocean_sensor_model/data/data_delete_by_lat_lon.csv')
     # ds['time'] = pd.to_datetime(ds['time'], format='%Y-%m-%d')
     # data_process = data_time_process(ds)
     # data_process.to_csv('/root/Ocean_sensor_model/data_process_2011_2021_null.csv', index=None)
-    data = np.load("float_sensor_num.npy")
+    data = np.load("/root/Ocean_sensor_model/data/float_sensor_num.npy")
     float_list = df.drop_duplicates(subset='float_id')['float_id'].to_list()
     dataframe_list = []
     time_all = []
@@ -208,24 +210,23 @@ def numpy_to_csv():
         for j in range(len(time_all)):
             dataframe_list.append([float_id, time_all[j], data_float[j][1], data_float[j][2], data_float[j][0]])
         data_full = pd.DataFrame(columns=['float_id', 'time', 'lat', 'lon', 'temp'], data=dataframe_list)
-        data_full.interpolate(limit_area='inside')
         dataframe_list = []
         dataframe = pd.concat([dataframe, data_full])
-    dataframe.to_csv('/root/Ocean_sensor_model/data_process_2011_2021_null_numpy_inside.csv', index=None)
+    dataframe.to_csv('/root/Ocean_sensor_model/data/data_process_2011_2021_null_numpy_inside.csv', index=None)
 
 
 def create_float_nan_array():
-    data = np.load("float_sensor_num.npy")
+    data = np.load("/root/Ocean_sensor_model/data/float_sensor_num.npy")
     data_float = np.zeros([data.shape[0], data.shape[1]])
     for i in range(data.shape[0]):
         for j in range(data.shape[1]):
             if ~np.isnan(data[i][j][0]):
                 data_float[i][j] = 1
-    np.save('float_nan.npy', data_float)
+    np.save('/root/Ocean_sensor_model/data/float_nan.npy', data_float)
 
 
 def creat_count():
-    data = np.load("float_nan.npy")
+    data = np.load("/root/Ocean_sensor_model/data/float_nan.npy")
     data_np = np.zeros([data.shape[0], data.shape[1], data.shape[1]])
     data_np_count = np.zeros([data.shape[0], data.shape[1], data.shape[1]])
     for i in range(data.shape[0]):
@@ -238,35 +239,44 @@ def creat_count():
         numpy_array_2 = np.diag(s)
         for x in range(data.shape[1]):
             for z in range(x+1, data.shape[1]):
-                if numpy_array[x][z] / (z-x) >= 0.8:
+                if numpy_array[x][z] / (z-x) >= 0.9:
                     numpy_array_2[x][z] = 1
                 else:
                     numpy_array_2[x][z] = 0
         data_np_count[i] = numpy_array_2
         print(i)
-    np.save('data_np.npy', data_np)
-    np.save('data_np_count.npy', data_np_count)
+    np.save('/root/Ocean_sensor_model/data/data_np.npy', data_np)
+    np.save('/root/Ocean_sensor_model/data/data_np_count.npy', data_np_count)
 
 
-if __name__ == '__main__':
-    # data = ocean_data_load()
-    # data_sort = data_sort_and_process(data)
-    # data_sort.to_csv('/root/Ocean_sensor_model/all_ocean_2011_2021.csv', index=None)
-    # data_delete_by_lat_lon = delete_float_id_by_lat_lon(data_sort)
-    # data_delete_by_lat_lon.to_csv('/root/Ocean_sensor_model/data_delete_by_lat_lon_2011_2021.csv', index=None)
-    # ds = pd.read_csv('/root/Ocean_sensor_model/data_delete_by_lat_lon_2011_2021.csv')
-    # ds['time'] = pd.to_datetime(ds['time'], format='%Y-%m-%d')
-    # data_process = data_time_process(ds)
-    # data_process.to_csv('/root/Ocean_sensor_model/data_process_2011_2021_null.csv', index=None)
-    # numpy_to_csv()
-    data = np.load('data_np_count.npy')
+def main():
+    data = ocean_data_load()
+    data_sort = data_sort_and_process(data)
+    data_sort.to_csv('/root/Ocean_sensor_model/data/all_ocean.csv', index=None)
+    print('successfully save all_ocean.csv')
+    data_delete = delete_float_id_by_num(data_sort, 50)
+    data_delete_by_lat_lon = delete_float_id_by_lat_lon(data_delete)
+    data_delete_by_lat_lon.to_csv('/root/Ocean_sensor_model/data/data_delete_by_lat_lon.csv', index=None)
+    print('successfully save data_delete_by_lat_lon.csv')
+    ds = pd.read_csv('/root/Ocean_sensor_model/data/data_delete_by_lat_lon.csv')
+    ds['time'] = pd.to_datetime(ds['time'], format='%Y-%m-%d')
+    data_process = data_time_process(ds)
+    np.save("/root/Ocean_sensor_model/data/float_sensor_num.npy", data_process)
+    print('successfully save float_sensor_num.npy')
+    numpy_to_csv()
+    create_float_nan_array()
+    creat_count()
+    data = np.load('/root/Ocean_sensor_model/data/data_np_count.npy')
     data_sum = np.sum(data, axis=0)
     for i in range(data.shape[1]):
         for j in range(i, data.shape[1]):
             data_sum[i][j] *= (j-i+1)
-    print(np.where(data_sum == 225104))
-    print(1)
+    np.save('/root/Ocean_sensor_model/data/data_np_num_timesolts.npy', data_sum)
+    print('successfully save data_np_num_timesolts.npy')
 
+
+if __name__ == '__main__':
+    main()
 
 
 

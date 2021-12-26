@@ -30,7 +30,7 @@ if __name__ == '__main__':
     # parser.add_argument('--dataset', type=str,
     #                     default='Ocean_sensor', help='the name of dataset')
     parser.add_argument('--model', type=str,
-                        default='STGCN', help='the name of model')
+                        default='AGCRN', help='the name of model')
     parser.add_argument('--dataset', type=str,
                         default='Ocean_sensor_nan', help='the name of dataset')
     # parser.add_argument('--model', type=str,
