@@ -44,16 +44,16 @@ def delete_float_id_by_lat_lon(data):
             d = data[data['float_id'] == float_id]
             lat_d = list(d['lat'])
             lon_d = list(d['lon'])
-            # temp_d = list(data[data['float_id'] == float_id]['temp'])
+            temp_d = list(d['temp'])
             lat_d_1 = np.absolute(np.array(lat_d[:-1]))
             lat_d_2 = np.absolute(np.array(lat_d[1:]))
             lon_d_1 = np.absolute(np.array(lon_d[:-1]))
             lon_d_2 = np.absolute(np.array(lon_d[1:]))
-            # temp_d_1 = np.array(temp_d[:-1])
-            # temp_d_2 = np.array(temp_d[1:])
+            temp_d_1 = np.array(temp_d[:-1])
+            temp_d_2 = np.array(temp_d[1:])
             lat_d_3 = math.fabs((lat_d_2 - lat_d_1).max())
             lon_d_3 = math.fabs((lon_d_2 - lon_d_1).max())
-            # temp_d_3 = math.fabs((temp_d_2 - temp_d_1).max())
+            temp_d_3 = math.fabs((temp_d_2 - temp_d_1).max())
             if lat_d_3 > 5 or lon_d_3 > 5:
                 not_used_float.append(float_id)
                 print('not_float_id',float_id,lat_d_3,lon_d_3)
@@ -275,9 +275,94 @@ def main():
     print('successfully save data_np_num_timesolts.npy')
 
 
+def creata_dataset():
+    ds = pd.read_csv('/root/Ocean_sensor_model/data/data_process_2011_2021_null_numpy_inside.csv')
+    ds['time'] = pd.to_datetime(ds['time'], format='%Y-%m-%d')
+    float_list = ds.drop_duplicates(subset='float_id', keep='first')['float_id'].to_list()
+    time_all = []
+    start_time = datetime.datetime(2011, 1, 1)
+    end_time = datetime.datetime(2021, 12, 1)
+    while 1:
+        if start_time > end_time:
+            break
+        else:
+            time_all.append(start_time)
+            start_time += datetime.timedelta(days=10)
+    start = 68
+    end = 331
+    b1 = time_all[start]
+    b2 = time_all[end]
+    used_float_3 = []
+    for float_index in float_list:
+        d2 = ds[ds['float_id'] == float_index]
+        d3 = d2[d2['time'] < b2]
+        d4 = d3[d3['time'] > b1]
+        #     print(d4['temp'].isna().sum())
+        if d4['temp'].isna().sum() < 40:
+            used_float_3.append(float_index)
+    print(len(used_float_3))
+    change_data = ds[ds['float_id'].isin(used_float_3)]
+    change_data = change_data[change_data['time'] <= b2]
+    change_data = change_data[change_data['time'] >= b1]
+    g1 = change_data.groupby('float_id')['time'].count() == 264
+    s = pd.DataFrame(g1)
+    y = s.reset_index()
+    y.columns = ['float', 'true']
+    float_list = list(y[y['true'] == True]['float'])
+    change_data = change_data[change_data['float_id'].isin(float_list)]
+    assert len(float_list) * (end-start) == change_data.shape[0]
+    ds = pd.DataFrame(columns=['time', 'float_id', 'lat', 'lon', 'temp'])
+    for i in float_list:
+        d2 = change_data[change_data['float_id'] == i]
+        d3 = d2.fillna(0)
+        ds = pd.concat([ds, d3])
+    # creat geo
+    geo = ds.drop_duplicates(subset=['float_id'], keep='first')
+    geo = geo[['float_id', 'lat', 'lon']]
+    geo_c = []
+    for index, row in geo.iterrows():
+        geo_c.append([row['float_id'], 'point', [round(row['lon'], 3), round(row['lat'], 3)]])
+    geo_csv = pd.DataFrame(columns=['geo_id', 'type', 'coordinates'], data=geo_c)
+    geo_csv.to_csv('/root/Ocean_sensor_model/raw_data/Ocean_sensor_nan/Ocean_sensor_nan.geo', index=None)
+    # create rel
+    from geopy.distance import geodesic
+    rel_c = []
+    n = 0
+    for i in geo_c:
+        for j in geo_c:
+            rel_c.append([n, 'geo', i[0], j[0], geodesic((i[2][0], i[2][1]), (j[2][0], j[2][1])).km])
+            n += 1
+    rel_csv = pd.DataFrame(columns=['rel_id', 'type', 'origin_id', 'destination_id', 'cost'], data=rel_c)
+    rel_csv.to_csv('/root/Ocean_sensor_model/raw_data/Ocean_sensor_nan/Ocean_sensor_nan.rel', index=None)
+    # create dyna
+    dyna_c = []
+    i = 0
+    for index, row in data.iterrows():
+        dyna_c.append([i, 'state', row['time'], row['float_id'], row['temp'], [row['lon'], row['lat']]])
+        i += 1
+    print(i)
+    dyna_csv = pd.DataFrame(columns=['dyna_id', 'type', 'time', 'entity_id', 'temp', 'dynaimc_coordinates'],
+                            data=dyna_c)
+    dyna_csv.to_csv('/root/Ocean_sensor_model/raw_data/Ocean_sensor_nan/Ocean_sensor_nan.dyna', index=None)
+
+
+def check_data_right():
+    data = pd.read_csv('/root/Ocean_sensor_model/data/data_process_2011_2021_null_numpy_inside.csv')
+    float_list = data.drop_duplicates(subset='float_id', keep='first')['float_id'].to_list()
+    for float_id in float_list:
+        d = data[data['float_id'] == float_id]
+        temp_d = list(d['temp'])
+        temp_d_1 = np.array(temp_d[:-1])
+        temp_d_2 = np.array(temp_d[1:])
+        temp_d_3 = np.absolute(temp_d_2 - temp_d_1)
+        nan_max = np.nanmax(temp_d_3)
+        zscore = d['temp'] - d['temp'].mean()
+        sigma = d['temp'].std()
+        d['ananoly'] = zscore.abs() > 3 * sigma
+
+
 if __name__ == '__main__':
     main()
-
 
 
 

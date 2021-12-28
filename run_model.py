@@ -29,14 +29,14 @@ if __name__ == '__main__':
     #                     default='STGCN', help='the name of model')
     # parser.add_argument('--dataset', type=str,
     #                     default='Ocean_sensor', help='the name of dataset')
-    parser.add_argument('--model', type=str,
-                        default='AGCRN', help='the name of model')
-    parser.add_argument('--dataset', type=str,
-                        default='Ocean_sensor_nan', help='the name of dataset')
     # parser.add_argument('--model', type=str,
-    #                     default='GRU', help='the name of model')
+    #                     default='AGCRN', help='the name of model')
     # parser.add_argument('--dataset', type=str,
-    #                     default='METR_LA', help='the name of dataset')
+    #                     default='Ocean_sensor_nan', help='the name of dataset')
+    parser.add_argument('--model', type=str,
+                        default='GRU', help='the name of model')
+    parser.add_argument('--dataset', type=str,
+                        default='METR_LA', help='the name of dataset')
     parser.add_argument('--config_file', type=str,
                         default=None, help='the file name of config file')
     parser.add_argument('--saved_model', type=str2bool,
