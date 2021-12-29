@@ -11,11 +11,23 @@ def ocean_data_load():
     pacific_2011_2021 = np.load("/root/Ocean_sensor_model/sensor_data/pacific_ocean.npy", allow_pickle=True)
     data_frame = []
     for i in atlantic_2011_2021:
-        data_frame.append(i)
+        try:
+            if int(i[5]) == 1 or int(i[5]) == 2:
+                data_frame.append(i[:-1])
+        except:
+            continue
     for i in india_2011_2021:
-        data_frame.append(i)
+        try:
+            if int(i[5]) == 1 or int(i[5]) == 2:
+                data_frame.append(i[:-1])
+        except:
+            continue
     for i in pacific_2011_2021:
-        data_frame.append(i)
+        try:
+            if int(i[5]) == 1 or int(i[5]) == 2:
+                data_frame.append(i[:-1])
+        except:
+            continue
     dataf = pd.DataFrame(columns=['time', 'float_id', 'lat', 'lon', 'temp'], data=data_frame)
     return dataf
 
@@ -23,11 +35,11 @@ def ocean_data_load():
 def data_sort_and_process(data):
     ds = data.sort_values(['float_id', 'time'])
     ds = ds.reset_index(drop=True)
-    ds["lat"] = pd.to_numeric(ds["lat"])
-    ds["lon"] = pd.to_numeric(ds["lon"])
+    ds["lat"] = pd.to_numeric(ds["lat"], errors='coerce')
+    ds["lon"] = pd.to_numeric(ds["lon"], errors='coerce')
     ds["temp"] = pd.to_numeric(ds["temp"], errors='coerce')
     ds['time'] = pd.to_datetime(ds['time'], format='%Y%m%d')
-    ds = ds[~ds['float_id'].isin(['n/a'])]
+    ds = ds[~ds['float_id'].isin(['n/a', ''])]
     return ds
 
 
@@ -288,36 +300,35 @@ def creata_dataset():
         else:
             time_all.append(start_time)
             start_time += datetime.timedelta(days=10)
-    start = 68
-    end = 331
+    start = 71
+    end = 315
     b1 = time_all[start]
     b2 = time_all[end]
     used_float_3 = []
+    change_data = pd.DataFrame(columns=['time', 'float_id', 'lat', 'lon', 'temp'])
     for float_index in float_list:
         d2 = ds[ds['float_id'] == float_index]
-        d3 = d2[d2['time'] < b2]
-        d4 = d3[d3['time'] > b1]
+        d3 = d2[d2['time'] <= b2]
+        d4 = d3[d3['time'] >= b1]
+        d4 = d4.interpolate(limit_area='inside')
         #     print(d4['temp'].isna().sum())
-        if d4['temp'].isna().sum() < 40:
+        if d4['temp'].isna().sum() < 24:
             used_float_3.append(float_index)
+            change_data = pd.concat([change_data, d4])
     print(len(used_float_3))
-    change_data = ds[ds['float_id'].isin(used_float_3)]
-    change_data = change_data[change_data['time'] <= b2]
-    change_data = change_data[change_data['time'] >= b1]
-    g1 = change_data.groupby('float_id')['time'].count() == 264
+    # change_data = ds[ds['float_id'].isin(used_float_3)]
+    # change_data = change_data[change_data['time'] <= b2]
+    # change_data = change_data[change_data['time'] >= b1]
+    g1 = change_data.groupby('float_id')['time'].count() == (end-start+1)
     s = pd.DataFrame(g1)
     y = s.reset_index()
     y.columns = ['float', 'true']
     float_list = list(y[y['true'] == True]['float'])
     change_data = change_data[change_data['float_id'].isin(float_list)]
-    assert len(float_list) * (end-start) == change_data.shape[0]
-    ds = pd.DataFrame(columns=['time', 'float_id', 'lat', 'lon', 'temp'])
-    for i in float_list:
-        d2 = change_data[change_data['float_id'] == i]
-        d3 = d2.fillna(0)
-        ds = pd.concat([ds, d3])
+    assert len(float_list) * (end-start+1) == change_data.shape[0]
     # creat geo
-    geo = ds.drop_duplicates(subset=['float_id'], keep='first')
+    geo = change_data.dropna()
+    geo = geo.drop_duplicates(subset=['float_id'], keep='first')
     geo = geo[['float_id', 'lat', 'lon']]
     geo_c = []
     for index, row in geo.iterrows():
@@ -337,13 +348,15 @@ def creata_dataset():
     # create dyna
     dyna_c = []
     i = 0
-    for index, row in data.iterrows():
+    for index, row in change_data.iterrows():
         dyna_c.append([i, 'state', row['time'], row['float_id'], row['temp'], [row['lon'], row['lat']]])
         i += 1
     print(i)
     dyna_csv = pd.DataFrame(columns=['dyna_id', 'type', 'time', 'entity_id', 'temp', 'dynaimc_coordinates'],
                             data=dyna_c)
-    dyna_csv.to_csv('/root/Ocean_sensor_model/raw_data/Ocean_sensor_nan/Ocean_sensor_nan.dyna', index=None)
+    dyna_csv.to_csv('/root/Ocean_sensor_model/raw_data/Ocean_sensor_nan/Ocean_sensor_nan_need_to_process.dyna',
+                    index=None)
+    full_nan()
 
 
 def check_data_right():
@@ -361,8 +374,23 @@ def check_data_right():
         d['ananoly'] = zscore.abs() > 3 * sigma
 
 
+def full_nan():
+    ds = pd.read_csv('/root/Ocean_sensor_model/raw_data/Ocean_sensor_nan/Ocean_sensor_nan_need_to_process.dyna')
+    float_list = ds.drop_duplicates(subset='entity_id', keep='first')['entity_id'].to_list()
+    dyna_csv = pd.DataFrame(columns=['dyna_id', 'type', 'time', 'entity_id', 'temp', 'dynaimc_coordinates'])
+    dyna_csv['temp'] = dyna_csv['temp'] + 10
+    for i in float_list:
+        d2 = ds[ds['entity_id'] == i]
+        d3 = d2.fillna(0)
+        ds = pd.concat([dyna_csv, d3])
+    dyna_csv.to_csv('/root/Ocean_sensor_model/raw_data/Ocean_sensor_nan/Ocean_sensor_nan.dyna', index=None)
+
+
 if __name__ == '__main__':
-    main()
+    # data = np.load('/root/Ocean_sensor_model/data/data_np_num_timesolts.npy')
+    # x = np.max(data)
+    # row, col = np.where(data, x)
+    creata_dataset()
 
 
 
