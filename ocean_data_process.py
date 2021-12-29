@@ -378,11 +378,11 @@ def full_nan():
     ds = pd.read_csv('/root/Ocean_sensor_model/raw_data/Ocean_sensor_nan/Ocean_sensor_nan_need_to_process.dyna')
     float_list = ds.drop_duplicates(subset='entity_id', keep='first')['entity_id'].to_list()
     dyna_csv = pd.DataFrame(columns=['dyna_id', 'type', 'time', 'entity_id', 'temp', 'dynaimc_coordinates'])
-    dyna_csv['temp'] = dyna_csv['temp'] + 10
     for i in float_list:
         d2 = ds[ds['entity_id'] == i]
+        d2['temp'] = d2['temp'] + 10
         d3 = d2.fillna(0)
-        ds = pd.concat([dyna_csv, d3])
+        dyna_csv = pd.concat([dyna_csv, d3])
     dyna_csv.to_csv('/root/Ocean_sensor_model/raw_data/Ocean_sensor_nan/Ocean_sensor_nan.dyna', index=None)
 
 
@@ -390,8 +390,8 @@ if __name__ == '__main__':
     # data = np.load('/root/Ocean_sensor_model/data/data_np_num_timesolts.npy')
     # x = np.max(data)
     # row, col = np.where(data, x)
-    creata_dataset()
-
+    # creata_dataset()
+    full_nan()
 
 
 
