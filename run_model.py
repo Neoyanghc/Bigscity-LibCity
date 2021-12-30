@@ -30,7 +30,7 @@ if __name__ == '__main__':
     # parser.add_argument('--dataset', type=str,
     #                     default='Ocean_sensor', help='the name of dataset')
     parser.add_argument('--model', type=str,
-                        default='AGCRN', help='the name of model')
+                        default='DGCN', help='the name of model')
     parser.add_argument('--dataset', type=str,
                         default='Ocean_sensor_nan', help='the name of dataset')
     # parser.add_argument('--model', type=str,
@@ -46,6 +46,13 @@ if __name__ == '__main__':
                              trained before')
     parser.add_argument('--exp_id', type=str,
                         default=None, help='id of experiment')
+
+    # parser.add_argument('--add_day_in_week', type=str2bool,
+    #                     default=True, help='id of experiment')
+    # parser.add_argument('--add_time_in_day', type=str2bool,
+    #                     default=True, help='id of experiment')
+    # parser.add_argument('--train_loss', type=str,
+    #                     default='masked_mse', help='loss function')
     # 增加其他可选的参数
     add_other_args(parser)
     # 解析参数
