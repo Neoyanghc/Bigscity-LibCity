@@ -243,7 +243,7 @@ class DGCN(AbstractTrafficStateModel):
         self.c_out = config.get('c_out', 64)
         self.K = config.get('K', 3)
         self.Kt = config.get('Kt', 3)
-        self.device = config.get('device', torch.device('cpu'))
+        self.device = config.get('device', torch.device('cuda'))
 
         self.num_nodes = self.data_feature.get('num_nodes', 1)
         self.feature_dim = self.data_feature.get('feature_dim', 1)

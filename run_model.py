@@ -46,11 +46,19 @@ if __name__ == '__main__':
                              trained before')
     parser.add_argument('--exp_id', type=str,
                         default=None, help='id of experiment')
+    parser.add_argument('--input_window', type=int, default=12,
+                        help='whether re-train model if the model is \
+                             trained before')
+    parser.add_argument('--output_window', type=int, default=12,
+                        help='whether re-train model if the model is \
+                             trained before')
+    # parser.add_argument('--max_epoch', type=int, default=100,
+    #                     help='max_epoch')
 
-    # parser.add_argument('--add_day_in_week', type=str2bool,
-    #                     default=True, help='id of experiment')
-    # parser.add_argument('--add_time_in_day', type=str2bool,
-    #                     default=True, help='id of experiment')
+    parser.add_argument('--add_day_in_week', type=str2bool,
+                        default=True, help='id of experiment')
+    parser.add_argument('--add_time_in_day', type=str2bool,
+                        default=False, help='id of experiment')
     # parser.add_argument('--train_loss', type=str,
     #                     default='masked_mse', help='loss function')
     # 增加其他可选的参数
@@ -64,3 +72,5 @@ if __name__ == '__main__':
     run_model(task=args.task, model_name=args.model, dataset_name=args.dataset,
               config_file=args.config_file, saved_model=args.saved_model,
               train=args.train, other_args=other_args)
+    print(1)
+

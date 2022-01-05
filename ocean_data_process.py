@@ -3,6 +3,7 @@ import pandas as pd
 import time
 import datetime
 import math
+import matplotlib.pyplot as plt
 
 
 def ocean_data_load():
@@ -387,10 +388,6 @@ def full_nan():
 
 
 if __name__ == '__main__':
-    # data = np.load('/root/Ocean_sensor_model/data/data_np_num_timesolts.npy')
-    # x = np.max(data)
-    # row, col = np.where(data, x)
-    # creata_dataset()
     full_nan()
 
 
